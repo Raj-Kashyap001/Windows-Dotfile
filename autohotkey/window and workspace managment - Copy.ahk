@@ -28,6 +28,14 @@ VD.createUntil(3) ; Create until we have at least 3 virtual desktops
 
 return
 
+CapsLock::Esc
+
+#Enter:: Run "wt.exe"
+
+Browser_Search:: {
+    Shutdown(1)
+}
+
 #!Left:: {
     currentDesktop := VD.getCurrentDesktopNum()
     totalDesktops := VD.getCount()
