@@ -28,14 +28,13 @@ set visualbell
 
 " Encoding
 set encoding=utf-8
-
 " Whitespace
 set wrap
 set textwidth=79
 set formatoptions=tcqrn1
-set tabstop=2
-set shiftwidth=2
-set softtabstop=2
+set tabstop=4
+set shiftwidth=4
+set softtabstop=4
 set expandtab
 set noshiftround
 highlight Cursorline cterm=bold
@@ -92,22 +91,37 @@ map <leader>l :set list!<CR> " Toggle tabs and EOL
 
 set cursorline
 hi CursorLine term=bold cterm=bold guibg=Grey40
-
+set novisualbell
+set belloff=all
 " Color scheme (terminal)
 set t_Co=25
 set background=dark
 set termguicolors
 call plug#begin()
-
 " List your plugins here
 Plug 'tpope/vim-sensible'
-Plug 'dracula/vim', { 'as': 'dracula' }
 Plug 'vim-airline/vim-airline'
+Plug 'catppuccin/vim', { 'as': 'catppuccin' }
 call plug#end()
 
-colorscheme dracula
+colorscheme catppuccin_mocha
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tabline#left_sep = ' '
 let g:airline#extensions#tabline#left_alt_sep = '|'
 
 :set noshowmode
+
+" Keymaps
+nnoremap <C-J> <C-W><C-J>
+nnoremap <C-K> <C-W><C-K>
+nnoremap <C-L> <C-W><C-L>
+nnoremap <C-H> <C-W><C-H>
+
+:silent !<command>
+
+
+
+
+
+
+

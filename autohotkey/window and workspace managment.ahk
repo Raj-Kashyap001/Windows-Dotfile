@@ -30,7 +30,12 @@ return
 
 CapsLock::Esc ; Bind useless key to Usefull key
 
-#Enter:: Run "wt.exe" ; open windows terminal
+#Enter:: {
+    activeWindow := WinExist("A")
+    Run "wt.exe focus-tab"
+    WinActivate("ahk_id " activeWindow)
+
+} ; open windows terminal
 
 Browser_Search:: { ; shutdown pc with random extra key on keyboard
     Shutdown(1)
