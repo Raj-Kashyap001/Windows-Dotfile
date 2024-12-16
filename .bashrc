@@ -1,5 +1,6 @@
 alias c=clear
 alias q=exit
+alias y=yazi
 alias ll='ls -la --color'
 # shellcheck shell=bash
 export VIMINIT='source $MYVIMRC'
