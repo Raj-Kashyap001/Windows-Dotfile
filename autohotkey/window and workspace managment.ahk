@@ -164,10 +164,9 @@ RESIZE_INCREMENT := 50
     monitorHeight := monitorBottom - monitorTop
 
     ; Gap corrections
-    outerGap := -7    ; Compensate for 7px outer gaps (borders)
-    innerGapX := 14  ; Compensate for 24px inner gaps (horizontal)
-    innerGapY := 7  ; Compensate for 21px inner gaps (vertical)
-
+    outerGap := 0
+    innerGapX := 0
+    innerGapY := 5
     ; Correct the monitor dimensions for the outer gap
     monitorLeft += outerGap
     monitorTop += outerGap
