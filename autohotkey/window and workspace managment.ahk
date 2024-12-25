@@ -48,13 +48,76 @@ try {
 VD.createUntil(3)                      ; Create at least 3 virtual desktops
 
 ; Start hot corner monitoring
-SetTimer CheckMousePosition, 50         ; Check mouse position every 50ms
+SetTimer(HotCorners, 10)  ; HotCorners is the name of the timer, will be reset every 0 seconds until the process is killed
 
 ;-------------------------------------------------------------------------------
 ; BASIC KEYBOARD REMAPPING
 ;-------------------------------------------------------------------------------
 CapsLock::Esc                          ; Remap Caps Lock to Escape
 Browser_Search:: Shutdown(1)            ; Use browser search key to trigger shutdown
+
+;-------------------------------------------------------------------------------
+; HOT CORNERS
+;-------------------------------------------------------------------------------
+
+HotCorners() {  ; Timer content
+    CoordMode("Mouse", "Screen")  ; Coordinate mode - coordinates will be passed to mouse-related functions, with coords relative to the entire screen
+    IsCorner(cornerID) {
+        WinGetPos(&X, &Y, &Xmax, &Ymax, "Program Manager")  ; Get desktop size
+        MouseGetPos(&MouseX, &MouseY)  ; Function MouseGetPos retrieves the current position of the mouse cursor
+        T := 5  ; Adjust tolerance value (pixels to corner) if desired
+
+        ; Boolean stores whether the mouse cursor is in the corner
+        CornerTopLeft := (MouseY < T and MouseX < T)
+        CornerTopRight := (MouseY < T and MouseX > Xmax - T)
+        CornerBottomLeft := (MouseY > Ymax - T and MouseX < T)
+        CornerBottomRight := (MouseY > Ymax - T and MouseX > Xmax - T)
+
+        if (cornerID = "TopLeft") {
+            return CornerTopLeft
+        } else if (cornerID = "TopRight") {
+            return CornerTopRight
+        } else if (cornerID = "BottomLeft") {
+            return CornerBottomLeft
+        } else if (cornerID = "BottomRight") {
+            return CornerBottomRight
+        }
+    }
+
+    ; Show Task View (Open Apps Overview)
+    if (IsCorner("TopLeft")) {
+        Send("{LWin down}{Tab down}")
+        Send("{LWin up}{Tab up}")
+        ; Open Activiry Tab
+        loop {
+            if !(IsCorner("TopLeft")) {
+                break  ; Exits loop when mouse is no longer in the corner
+            }
+        }
+    }
+
+    ; ; Show Action Center
+    ; if (IsCorner("TopRight")) {
+    ;     Send("{LWin down}{a down}")
+    ;     Send("{LWin up}{a up}")
+    ;     Loop {
+    ;         if !(IsCorner("TopRight")) {
+    ;             break  ; Exits loop when mouse is no longer in the corner
+    ;         }
+    ;     }
+    ; }
+
+    ; Press Windows key
+    if (IsCorner("BottomLeft")) {
+        Send("{LWin down}")
+        Send("{LWin up}")
+        loop {
+            if !(IsCorner("BottomLeft")) {
+                break  ; Exits loop when mouse is no longer in the corner
+            }
+        }
+    }
+}
 
 ;-------------------------------------------------------------------------------
 ; APPLICATION LAUNCHER SHORTCUTS
@@ -290,36 +353,26 @@ CloseAllWindows() {
     }
 }
 
-CheckMousePosition() {                  ; Hot corner detection function
-    global cornerSize, cornerX, cornerY, timeRequired, startTime, isTracking
+; CheckMousePosition() {                  ; Hot corner detection function
+;     global timeRequired, startTime, isTracking
 
-    MouseGetPos(&currentX, &currentY)
+;     ; Get the mouse position
+;     MouseGetPos(&currentX, &currentY)
 
-    if (currentX <= cornerSize && currentY <= cornerSize) {
-        if (!isTracking) {
-            startTime := A_TickCount
-            isTracking := true
-        } else {
-            if (A_TickCount - startTime >= timeRequired) {
-                isTracking := false
-                Run("explorer.exe shell:::{3080F90E-D7AD-11D9-BD98-0000947B0257}")
-                Sleep 500
-            }
-        }
-    } else {
-        isTracking := false
-    }
-}
-
-; Helper function to find the adjacent window (tiled next to the active window)
-FindAdjacentWindow(activeWin, monitorLeft, monitorRight) {
-    for hwnd in WinGetList() {
-        if (hwnd != activeWin) {
-            WinGetPos(&x, &y, &width, &height, hwnd)
-            ; Check if the window is adjacent on the same monitor
-            if (x == monitorLeft || x + width == monitorRight)
-                return hwnd
-        }
-    }
-    return 0 ; No adjacent window found
-}
+;     ; Check if the mouse is at the top-left corner (0, 0)
+;     if (currentX = 0 && currentY = 0) {
+;         if (!isTracking) {
+;             startTime := A_TickCount
+;             isTracking := true
+;         } else {
+;             if (A_TickCount - startTime >= timeRequired) {
+;                 isTracking := false
+;                 ; Trigger Task View
+;                 Run("explorer.exe shell:::{3080F90E-D7AD-11D9-BD98-0000947B0257}")
+;                 Sleep 500
+;             }
+;         }
+;     } else {
+;         isTracking := false
+;     }
+; }
