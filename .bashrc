@@ -1,11 +1,12 @@
 alias c=clear
 alias q=exit
 alias y=yazi
+alias ff=fastfetch
 alias ll='ls -la --color'
 # shellcheck shell=bash
 export VIMINIT='source $MYVIMRC'
 export MYVIMRC='~/.config/.vimrc'
-
+export $PATH='/c/Program Files/Firefox Developer Edition/firefox.exe:$PATH'
 
 # =============================================================================
 #
