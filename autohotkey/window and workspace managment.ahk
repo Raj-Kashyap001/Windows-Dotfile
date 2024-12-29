@@ -108,15 +108,15 @@ HotCorners() {  ; Timer content
     ; }
 
     ; Press Windows key
-    if (IsCorner("BottomLeft")) {
-        Send("{LWin down}")
-        Send("{LWin up}")
-        loop {
-            if !(IsCorner("BottomLeft")) {
-                break  ; Exits loop when mouse is no longer in the corner
-            }
-        }
-    }
+    ; if (IsCorner("BottomLeft")) {
+    ;     Send("{LWin down}")
+    ;     Send("{LWin up}")
+    ;     loop {
+    ;         if !(IsCorner("BottomLeft")) {
+    ;             break  ; Exits loop when mouse is no longer in the corner
+    ;         }
+    ;     }
+    ; }
 }
 
 ;-------------------------------------------------------------------------------
@@ -377,3 +377,29 @@ CloseAllWindows() {
 ;         isTracking := false
 ;     }
 ; }
+
+; OTHER UTILS
+; Toggle Hidden Files Script
+; Hotkey: Ctrl + H
+; Description: Toggles the visibility of hidden files in Windows Explorer
+
+^h:: ToggleHiddenFiles()
+
+ToggleHiddenFiles() {
+    ; Check if the active window is Explorer
+    if !WinActive("ahk_class CabinetWClass")
+        return
+
+    ; Run Registry Query to get current hidden files state
+    result := RegRead("HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "Hidden")
+
+    ; Toggle the value (0 = hidden files are not shown, 1 = hidden files are shown)
+    newValue := (result = 0) ? 1 : 0
+
+    ; Write the new value to registry
+    RegWrite(newValue, "REG_DWORD", "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
+        "Hidden")
+
+    ; Refresh Explorer
+    Send "{F5}"
+}
