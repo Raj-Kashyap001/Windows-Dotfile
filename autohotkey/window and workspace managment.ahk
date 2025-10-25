@@ -129,29 +129,48 @@ try {
     #q:: WinClose("A")                     ; Win + Q: Close active window
 
     #Enter:: {                             ; Win + Enter: Focus Windows Terminal
-        activeWindow := WinExist("A")
-        Run "wt.exe focus-tab"
-        WinActivate("ahk_id " activeWindow)
+        try {
+            activeWindow := WinExist("A")
+            Run "wt.exe focus-tab"
+            if (activeWindow) {
+                try {
+                    WinActivate("ahk_id " activeWindow)
+                } catch {
+                    ; Window no longer exists, ignore
+                }
+            }
+        } catch {
+            ; Failed to get active window or run wt.exe
+        }
     }
 
     #`:: {                                 ; Win + `: Focus previous window
-        winNumber := 0
-        win := WinGetList()
+        try {
+            winNumber := 0
+            win := WinGetList()
 
-        for index, winHandle in win {
-            title := WinGetTitle(winHandle)
-            proc := WinGetProcessName(winHandle)
-            class := WinGetClass(winHandle)
+            for index, winHandle in win {
+                try {
+                    title := WinGetTitle(winHandle)
+                    proc := WinGetProcessName(winHandle)
+                    class := WinGetClass(winHandle)
 
-            if (!(class ~= "i)Toolbar|#32770") && title != ""
-            && (title != "Program Manager" || proc != "Explorer.exe")) {
-                winNumber++
+                    if (!(class ~= "i)Toolbar|#32770") && title != ""
+                    && (title != "Program Manager" || proc != "Explorer.exe")) {
+                        winNumber++
+                    }
+
+                    if (winNumber = 2) {
+                        WinActivate(winHandle)
+                        break
+                    }
+                } catch {
+                    ; Window no longer exists, continue to next
+                    continue
+                }
             }
-
-            if (winNumber = 2) {
-                WinActivate(winHandle)
-                break
-            }
+        } catch {
+            ; Failed to get window list
         }
     }
 
@@ -159,29 +178,55 @@ try {
     ; VIRTUAL DESKTOP MANAGEMENT
     ;-------------------------------------------------------------------------------
     #!Left:: {                             ; Win + Alt + Left: Move window to left desktop
-        currentDesktop := VD.getCurrentDesktopNum()
-        totalDesktops := VD.getCount()
+        try {
+            currentDesktop := VD.getCurrentDesktopNum()
+            totalDesktops := VD.getCount()
 
-        previousDesktop := (currentDesktop = 1) ? totalDesktops : currentDesktop - 1
-        activeWindow := WinExist("A")
-        VD.goToDesktopNum(previousDesktop)
-        VD.MoveWindowToDesktopNum("ahk_id " activeWindow, previousDesktop)
-        WinActivate("ahk_id " activeWindow)
+            previousDesktop := (currentDesktop = 1) ? totalDesktops : currentDesktop - 1
+            activeWindow := WinExist("A")
+            
+            if (activeWindow) {
+                VD.goToDesktopNum(previousDesktop)
+                try {
+                    VD.MoveWindowToDesktopNum("ahk_id " activeWindow, previousDesktop)
+                    WinActivate("ahk_id " activeWindow)
+                } catch {
+                    ; Window no longer exists or cannot be moved
+                }
+            }
+        } catch {
+            ; Failed to get desktop info or move window
+        }
     }
 
     #!Right:: {                            ; Win + Alt + Right: Move window to right desktop
-        currentDesktop := VD.getCurrentDesktopNum()
-        totalDesktops := VD.getCount()
+        try {
+            currentDesktop := VD.getCurrentDesktopNum()
+            totalDesktops := VD.getCount()
 
-        nextDesktop := (currentDesktop = totalDesktops) ? 1 : currentDesktop + 1
-        activeWindow := WinExist("A")
-        VD.goToDesktopNum(nextDesktop)
-        VD.MoveWindowToDesktopNum("ahk_id " activeWindow, nextDesktop)
-        WinActivate("ahk_id " activeWindow)
+            nextDesktop := (currentDesktop = totalDesktops) ? 1 : currentDesktop + 1
+            activeWindow := WinExist("A")
+            
+            if (activeWindow) {
+                VD.goToDesktopNum(nextDesktop)
+                try {
+                    VD.MoveWindowToDesktopNum("ahk_id " activeWindow, nextDesktop)
+                    WinActivate("ahk_id " activeWindow)
+                } catch {
+                    ; Window no longer exists or cannot be moved
+                }
+            }
+        } catch {
+            ; Failed to get desktop info or move window
+        }
     }
 
     #+x:: {  ; Win+Shift+X to close all windows
-        CloseAllWindows()
+        try {
+            CloseAllWindows()
+        } catch {
+            ; Failed to close windows
+        }
     }
 } catch {
     ; Log the error (optional)
