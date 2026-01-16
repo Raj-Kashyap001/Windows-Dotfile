@@ -131,7 +131,7 @@ try {
     #Enter:: {                             ; Win + Enter: Focus Windows Terminal
         try {
             activeWindow := WinExist("A")
-            Run "wt.exe focus-tab"
+            Run "wt.exe"
             if (activeWindow) {
                 try {
                     WinActivate("ahk_id " activeWindow)
@@ -148,7 +148,6 @@ try {
         try {
             winNumber := 0
             win := WinGetList()
-
             for index, winHandle in win {
                 try {
                     title := WinGetTitle(winHandle)
@@ -236,13 +235,47 @@ try {
     RestartScript()
 }
 
-    ;-------------------------------------------------------------------------------
-    ; WIN + NUMBER TO SWITCH WORKSPACES (Overrides Taskbar Apps)
-    ;-------------------------------------------------------------------------------
-    Loop 9 {
-		Hotkey("#" . A_Index, (hk) => (
-			num := Integer(SubStr(hk, 2)),
-			VD.createUntil(num),
-			VD.goToDesktopNum(num)
-		))
-	}
+;-------------------------------------------------------------------------------
+; WIN + NUMBER TO SWITCH WORKSPACES (Overrides Taskbar Apps)
+;-------------------------------------------------------------------------------
+Loop 9 {
+	Hotkey("#" . A_Index, (hk) => (
+		num := Integer(SubStr(hk, 2)),
+		VD.createUntil(num),
+		VD.goToDesktopNum(num)
+	))
+}
+	
+;-------------------------------------------------------------------------------
+; WIN + SHIFT + NUMBER TO MOVE WINDOW TO WORKSPACE AND FOLLOW
+;-------------------------------------------------------------------------------
+Loop 9 {
+    Hotkey("#+" . A_Index, MoveWindowAndFollow)
+}
+
+MoveWindowAndFollow(hk) {
+    ; Extract the number from the hotkey string (e.g., "#+3" -> 3)
+    num := Integer(SubStr(hk, 3))
+    
+    ; Identify the active window
+    activeWin := WinExist("A")
+    
+    ; Proceed only if a window is focused
+    if (activeWin) {
+        try {
+            ; Ensure the target desktop exists
+            VD.createUntil(num)
+            
+            ; Move the window to the target desktop
+            VD.MoveWindowToDesktopNum("ahk_id " activeWin, num)
+            
+            ; Switch view to that desktop
+            VD.goToDesktopNum(num)
+            
+            ; Refocus the window
+            WinActivate("ahk_id " activeWin)
+        } catch {
+            ; Do nothing if move fails
+        }
+    }
+}
