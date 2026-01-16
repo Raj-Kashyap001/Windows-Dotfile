@@ -1,5 +1,5 @@
 ;===============================================================================
-; Windows 11 Virtual Desktop Manager and Hotkeys
+; Windows 10/11 Virtual Desktop Manager and Hotkeys
 ;===============================================================================
 
 ;-------------------------------------------------------------------------------
@@ -235,3 +235,14 @@ try {
     ; Restart the script after a delay
     RestartScript()
 }
+
+    ;-------------------------------------------------------------------------------
+    ; WIN + NUMBER TO SWITCH WORKSPACES (Overrides Taskbar Apps)
+    ;-------------------------------------------------------------------------------
+    Loop 9 {
+		Hotkey("#" . A_Index, (hk) => (
+			num := Integer(SubStr(hk, 2)),
+			VD.createUntil(num),
+			VD.goToDesktopNum(num)
+		))
+	}
