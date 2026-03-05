@@ -331,3 +331,20 @@ function rmrf {
     )
     Remove-Item -Path $Path -Recurse -Force -Verbose
 }
+
+function killport {
+    param([int]$Port = 3000)
+    
+    # Use netstat to find the PID
+    $owner = netstat -ano | Select-String ":$Port\s+" | ForEach-Object { 
+        $_ -split "\s+" | Select-Object -Last 1 
+    } | Select-Object -Unique
+
+    if ($owner) {
+        Write-Host "Found process ID $owner on port $Port. Killing now..." -ForegroundColor Cyan
+        Stop-Process -Id $owner -Force -ErrorAction SilentlyContinue
+        Write-Host "Port $Port is now free." -ForegroundColor Green
+    } else {
+        Write-Host "No process found on port $Port." -ForegroundColor Yellow
+    }
+}
