@@ -174,6 +174,86 @@ try {
     }
 
     ;-------------------------------------------------------------------------------
+    ; WINDOW WIDTH RESIZING (Hyprland-style: center-anchored)
+    ; Win + [  =>  shrink width by 10% of current width
+    ; Win + ]  =>  grow width by 10% of current width
+    ;
+    ; Skipped for:
+    ;   - No focused window
+    ;   - Dialog boxes (#32770)
+    ;   - Maximized / minimized windows
+    ;   - Windows that refuse WinMove (e.g. some UWP apps)
+    ;-------------------------------------------------------------------------------
+
+    IsResizableWindow(hwnd) {
+        ; Reject dialog boxes
+        class := WinGetClass("ahk_id " hwnd)
+        if (class = "#32770")
+            return false
+
+        ; Reject minimized or maximized windows
+        minMax := WinGetMinMax("ahk_id " hwnd)
+        if (minMax != 0)   ; 1 = maximized, -1 = minimized
+            return false
+
+        return true
+    }
+
+    ResizeWidth(direction) {
+        ; direction: +1 to grow, -1 to shrink
+        try {
+            hwnd := WinExist("A")
+            if (!hwnd)
+                return
+
+            if (!IsResizableWindow(hwnd))
+                return
+
+            ; Get current window geometry
+            WinGetPos(&winX, &winY, &winW, &winH, "ahk_id " hwnd)
+
+            ; Get screen width to determine which half the window is on
+            screenW := SysGet(78)   ; SM_CXVIRTUALSCREEN (full virtual screen width)
+            screenX := SysGet(76)   ; SM_XVIRTUALSCREEN  (left edge of virtual screen)
+
+            ; Use the window's horizontal center to decide which side it hugs
+            winCenterX := winX + winW // 2
+            screenMidX := screenX + screenW // 2
+
+            ; Compute delta: 10% of current width, minimum 1px
+            delta := Round(winW * 0.10)
+            if (delta < 1)
+                delta := 1
+
+            newW := winW + (direction * delta)
+            if (newW < 100)
+                newW := 100
+
+            if (winCenterX >= screenMidX) {
+                ; Window is on the RIGHT half — anchor right edge, adjust from left
+                ; Flip direction: ] grows leftward (newX decreases), [ shrinks rightward (newX increases)
+                newW := winW + (-direction * delta)
+                if (newW < 100)
+                    newW := 100
+                rightEdge := winX + winW
+                newX := rightEdge - newW
+                if (newX < screenX)
+                    newX := screenX
+            } else {
+                ; Window is on the LEFT half — anchor left edge, adjust from right
+                newX := winX
+            }
+
+            WinMove(newX, winY, newW, winH, "ahk_id " hwnd)
+        } catch {
+            ; Window no longer exists or cannot be resized — silently ignore
+        }
+    }
+
+    #[:: ResizeWidth(-1)                   ; Win + [: Shrink window width
+    #]:: ResizeWidth(+1)                   ; Win + ]: Grow window width
+
+    ;-------------------------------------------------------------------------------
     ; VIRTUAL DESKTOP MANAGEMENT
     ;-------------------------------------------------------------------------------
     #!Left:: {                             ; Win + Alt + Left: Move window to left desktop
