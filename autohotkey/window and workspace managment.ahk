@@ -201,6 +201,8 @@ try {
 
     ResizeWidth(direction) {
         ; direction: +1 to grow, -1 to shrink
+        T := 5  ; Edge-touch tolerance in pixels
+
         try {
             hwnd := WinExist("A")
             if (!hwnd)
@@ -213,10 +215,9 @@ try {
             WinGetPos(&winX, &winY, &winW, &winH, "ahk_id " hwnd)
 
             ; Get screen width to determine which half the window is on
-            screenW := SysGet(78)   ; SM_CXVIRTUALSCREEN (full virtual screen width)
-            screenX := SysGet(76)   ; SM_XVIRTUALSCREEN  (left edge of virtual screen)
+            screenW := SysGet(78)   ; SM_CXVIRTUALSCREEN
+            screenX := SysGet(76)   ; SM_XVIRTUALSCREEN
 
-            ; Use the window's horizontal center to decide which side it hugs
             winCenterX := winX + winW // 2
             screenMidX := screenX + screenW // 2
 
@@ -225,13 +226,10 @@ try {
             if (delta < 1)
                 delta := 1
 
-            newW := winW + (direction * delta)
-            if (newW < 100)
-                newW := 100
+            isRightSide := (winCenterX >= screenMidX)
 
-            if (winCenterX >= screenMidX) {
-                ; Window is on the RIGHT half — anchor right edge, adjust from left
-                ; Flip direction: ] grows leftward (newX decreases), [ shrinks rightward (newX increases)
+            if (isRightSide) {
+                ; Anchor right edge, grow/shrink leftward — direction is flipped
                 newW := winW + (-direction * delta)
                 if (newW < 100)
                     newW := 100
@@ -239,12 +237,92 @@ try {
                 newX := rightEdge - newW
                 if (newX < screenX)
                     newX := screenX
+
+                ; The shared edge is the LEFT edge of this window (winX)
+                ; Look for a neighbor whose RIGHT edge touches it
+                sharedEdge := winX
+                neighborNewW := 0
+                neighborHwnd := 0
+
+                allWins := WinGetList()
+                for _, wh in allWins {
+                    if (wh = hwnd)
+                        continue
+                    try {
+                        if (!IsResizableWindow(wh))
+                            continue
+                        WinGetPos(&nx, &ny, &nw, &nh, "ahk_id " wh)
+                        nRightEdge := nx + nw
+                        ; Neighbor's right edge must touch our left edge
+                        ; and windows must vertically overlap
+                        vOverlap := (ny < winY + winH) && (ny + nh > winY)
+                        if (Abs(nRightEdge - sharedEdge) <= T && vOverlap) {
+                            ; Neighbor is on the left, anchor ITS left edge
+                            ; shrink/grow its right edge to match our new left edge
+                            neighborNewW := newX - nx
+                            if (neighborNewW < 100)
+                                neighborNewW := 100
+                            neighborHwnd := wh
+                            neighborX := nx
+                            neighborY := ny
+                            neighborH := nh
+                            break  ; topmost match only
+                        }
+                    } catch {
+                        continue
+                    }
+                }
+
             } else {
-                ; Window is on the LEFT half — anchor left edge, adjust from right
+                ; Anchor left edge, grow/shrink rightward
+                newW := winW + (direction * delta)
+                if (newW < 100)
+                    newW := 100
                 newX := winX
+
+                ; The shared edge is the RIGHT edge of this window (winX + winW)
+                ; Look for a neighbor whose LEFT edge touches it
+                sharedEdge := winX + winW
+                neighborNewW := 0
+                neighborHwnd := 0
+
+                allWins := WinGetList()
+                for _, wh in allWins {
+                    if (wh = hwnd)
+                        continue
+                    try {
+                        if (!IsResizableWindow(wh))
+                            continue
+                        WinGetPos(&nx, &ny, &nw, &nh, "ahk_id " wh)
+                        ; Neighbor's left edge must touch our right edge
+                        vOverlap := (ny < winY + winH) && (ny + nh > winY)
+                        if (Abs(nx - sharedEdge) <= T && vOverlap) {
+                            ; Neighbor is on the right, anchor ITS right edge
+                            ; its new X shifts, width shrinks/grows to compensate
+                            newNeighborX := newX + newW
+                            neighborNewW := (nx + nw) - newNeighborX
+                            if (neighborNewW < 100)
+                                neighborNewW := 100
+                            neighborHwnd := wh
+                            neighborX := newNeighborX
+                            neighborY := ny
+                            neighborH := nh
+                            break  ; topmost match only
+                        }
+                    } catch {
+                        continue
+                    }
+                }
             }
 
+            ; Apply resize to focused window
             WinMove(newX, winY, newW, winH, "ahk_id " hwnd)
+
+            ; Apply compensating resize to neighbor if found
+            if (neighborHwnd && neighborNewW >= 100) {
+                WinMove(neighborX, neighborY, neighborNewW, neighborH, "ahk_id " neighborHwnd)
+            }
+
         } catch {
             ; Window no longer exists or cannot be resized — silently ignore
         }
