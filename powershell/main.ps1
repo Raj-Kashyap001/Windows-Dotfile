@@ -1,6 +1,27 @@
 #Import-Module -Name Terminal-Icons
 #Import-Module 'gsudoModule'
 
+function prompt {
+    $home_normalized = $HOME -replace '\\', '/'
+    $current = (Get-Location).Path -replace '\\', '/'
+    $short = $current -replace [regex]::Escape($home_normalized), '~'
+
+    # Colors
+    $cyan   = "`e[38;2;80;200;220m"
+    $blue   = "`e[38;2;100;150;255m"
+    $yellow = "`e[38;2;255;210;80m"
+    $reset  = "`e[0m"
+
+    # Split path for icon + coloring
+    $parts = $short -split '/'
+    $dirIcon = " "   # nf-md-folder (or use  nf-fa-folder)
+
+    # Write-Host ""
+    Write-Host "${cyan} ${reset}${blue}${short}${reset}" -NoNewline
+    Write-Host ""
+    return "${yellow}>_${reset} "
+}
+
 # Lazy-load PSFzf only when first used
 function Enable-Fzf {
     Write-Host "[loading PSFzf...]" -ForegroundColor Yellow
@@ -348,3 +369,9 @@ function killport {
         Write-Host "No process found on port $Port." -ForegroundColor Yellow
     }
 }
+#f45873b3-b655-43a6-b217-97c00aa0db58 PowerToys CommandNotFound module
+
+Import-Module -Name Microsoft.WinGet.CommandNotFound
+#f45873b3-b655-43a6-b217-97c00aa0db58
+
+echo "`e[?12l"
