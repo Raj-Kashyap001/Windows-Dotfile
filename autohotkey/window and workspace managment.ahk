@@ -121,7 +121,7 @@ try {
     ; APPLICATION LAUNCHER SHORTCUTS
     ;-------------------------------------------------------------------------------
     #c:: Run "C:\Users\raj\AppData\Local\Programs\Microsoft VS Code\Code.exe"    ; Win + C: Launch VS Code
-    #f:: Run "firefox.exe"                                                       ; Win + F: Launch Firefox
+    #f:: Run "https:\\"                                                            ; Win + F: Launch Browser
 
     ;-------------------------------------------------------------------------------
     ; WINDOW MANAGEMENT SHORTCUTS
@@ -201,7 +201,7 @@ try {
 
     ResizeWidth(direction) {
         ; direction: +1 to grow, -1 to shrink
-        T := 5  ; Edge-touch tolerance in pixels
+        T := 10  ; Edge-touch tolerance in pixels
 
         try {
             hwnd := WinExist("A")
@@ -341,7 +341,7 @@ try {
 
             previousDesktop := (currentDesktop = 1) ? totalDesktops : currentDesktop - 1
             activeWindow := WinExist("A")
-            
+
             if (activeWindow) {
                 VD.goToDesktopNum(previousDesktop)
                 try {
@@ -363,7 +363,7 @@ try {
 
             nextDesktop := (currentDesktop = totalDesktops) ? 1 : currentDesktop + 1
             activeWindow := WinExist("A")
-            
+
             if (activeWindow) {
                 VD.goToDesktopNum(nextDesktop)
                 try {
@@ -403,7 +403,7 @@ Loop 9 {
 		VD.goToDesktopNum(num)
 	))
 }
-	
+
 ;-------------------------------------------------------------------------------
 ; WIN + SHIFT + NUMBER TO MOVE WINDOW TO WORKSPACE AND FOLLOW
 ;-------------------------------------------------------------------------------
@@ -414,22 +414,22 @@ Loop 9 {
 MoveWindowAndFollow(hk) {
     ; Extract the number from the hotkey string (e.g., "#+3" -> 3)
     num := Integer(SubStr(hk, 3))
-    
+
     ; Identify the active window
     activeWin := WinExist("A")
-    
+
     ; Proceed only if a window is focused
     if (activeWin) {
         try {
             ; Ensure the target desktop exists
             VD.createUntil(num)
-            
+
             ; Move the window to the target desktop
             VD.MoveWindowToDesktopNum("ahk_id " activeWin, num)
-            
+
             ; Switch view to that desktop
             VD.goToDesktopNum(num)
-            
+
             ; Refocus the window
             WinActivate("ahk_id " activeWin)
         } catch {
@@ -437,3 +437,25 @@ MoveWindowAndFollow(hk) {
         }
     }
 }
+
+
+;-------------------------------------------------------------------------------
+; EXPLORER: Ctrl + H — Toggle Hidden Files Visibility
+;-------------------------------------------------------------------------------
+#HotIf WinActive("ahk_class CabinetWClass") or WinActive("ahk_class ExploreWClass")
+
+^h:: {
+    regKey := "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+    current := RegRead(regKey, "Hidden")
+    RegWrite((current = 1) ? 2 : 1, "REG_DWORD", regKey, "Hidden")
+
+    ; Notify the shell of the settings change
+    DllCall("Shell32\SHChangeNotify", "Int", 0x08000000, "UInt", 0, "Ptr", 0, "Ptr", 0)
+
+    ; Refresh all open Explorer windows via COM
+    for window in ComObject("Shell.Application").Windows {
+        try window.Refresh()
+    }
+}
+
+#HotIf
