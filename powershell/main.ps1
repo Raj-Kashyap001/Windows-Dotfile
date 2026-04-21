@@ -2,8 +2,8 @@
 #Import-Module 'gsudoModule'
 
 function prompt {
-    $home_normalized = $HOME -replace '\\', '/'
-    $current = (Get-Location).Path -replace '\\', '/'
+    $home_normalized = $HOME
+    $current = (Get-Location).Path
     $short = $current -replace [regex]::Escape($home_normalized), '~'
 
     # Colors
@@ -333,7 +333,7 @@ Set-Alias -Name zi -Value __zoxide_zi -Option AllScope -Scope Global -Force
 # To initialize zoxide, add this to your configuration (find it by running
 # `echo $profile` in PowerShell):
 #
-Invoke-Expression (& { (zoxide init powershell | Out-String) })
+# Invoke-Expression (& { (zoxide init powershell | Out-String) })
 
 function q {
   exit
@@ -371,7 +371,7 @@ function killport {
 }
 #f45873b3-b655-43a6-b217-97c00aa0db58 PowerToys CommandNotFound module
 
-Import-Module -Name Microsoft.WinGet.CommandNotFound
+#Import-Module -Name Microsoft.WinGet.CommandNotFound
 #f45873b3-b655-43a6-b217-97c00aa0db58
 
 echo "`e[?12l"
